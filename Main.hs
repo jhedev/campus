@@ -1,6 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 import Data.Monoid
+import Data.Time.Clock (getCurrentTime, utctDay)
+import Data.Time.Calendar (addDays)
 import Data.Conduit.Binary (sinkFile)
 import qualified Data.Conduit as C
 import Network.HTTP.Conduit
@@ -20,10 +22,13 @@ getCalendar :: IO LBS.ByteString
 getCalendar = do
   user <- BS.pack <$> getEnv "CAMPUS_USER"
   password <- BS.pack <$> getEnv "CAMPUS_PASS"
-  let iCalReq = fromUrl "https://www.campus.rwth-aachen.de/office/views/calendar/iCalExport.asp?startdt=01.10.2014&enddt=31.03.2015%2023:59:59"
+  curTime <- getCurrentTime
+  let startDay = show $ addDays (-60) $ utctDay curTime
+      endDay = show $ addDays 400 $ utctDay curTime
+      iCalReq = fromUrl $ "https://www.campus.rwth-aachen.de/office/views/calendar/iCalExport.asp?startdt=" <> startDay <> "&enddt=" <> endDay <> "%2023:59:59"
       authReq = (fromUrl "https://www.campus.rwth-aachen.de/office/views/campus/redirect.asp") {
-        method = "POST",
-        queryString = "?u=" <> user <> "&p=" <> password <> "&login=>%20Login"
+         method = "POST",
+         queryString = "?u=" <> user <> "&p=" <> password <> "&login=>%20Login"
         }
       initialReq = fromUrl "https://www.campus.rwth-aachen.de/office/"
   withManager $ \mgr -> do
