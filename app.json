@@ -5,6 +5,8 @@
     "logo": "https://haskellonheroku.com/_images/logo.svg",
     "repository": "https://github.com/jhedev/campus",
     "env": {
-        "BUILDPACK_URL": "https://github.com/mietek/haskell-on-heroku"
+        "BUILDPACK_URL": "https://github.com/mietek/haskell-on-heroku",
+        "CAMPUS_USER": "123456",
+        "CAMPUS_PASS": "password"
     }
 }
