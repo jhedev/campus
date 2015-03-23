@@ -15,6 +15,9 @@ import qualified Data.ByteString.Lazy as LBS
 
 import Web.Scotty
 
+baseUrl :: String
+baseUrl = "https://www.campus.rwth-aachen.de/office/"
+
 fromUrl :: String -> Request
 fromUrl = fromJust . parseUrl
 
@@ -23,16 +26,18 @@ getCalendar = do
   user <- BS.pack <$> getEnv "CAMPUS_USER"
   password <- BS.pack <$> getEnv "CAMPUS_PASS"
   curTime <- getCurrentTime
-  let startDay = show $ addDays (-60) $ utctDay curTime
-      endDay = show $ addDays 400 $ utctDay curTime
-      iCalReq = fromUrl $ "https://www.campus.rwth-aachen.de/office/views/calendar/iCalExport.asp?startdt=" <> startDay <> "&enddt=" <> endDay <> "%2023:59:59"
-      authReq = (fromUrl "https://www.campus.rwth-aachen.de/office/views/campus/redirect.asp") {
-         method = "POST",
+  let startDay   = show $ addDays (-60) $ utctDay curTime
+      endDay     = show $ addDays 400 $ utctDay curTime
+      iCalReq    = fromUrl $ baseUrl <> "/views/calendar/iCalExport.asp?startdt=" <> startDay <> "&enddt=" <> endDay <> "%2023:59:59"
+      authReq    = (fromUrl (baseUrl <> "/views/campus/redirect.asp")) {
+         method      = "POST",
          queryString = "?u=" <> user <> "&p=" <> password <> "&login=>%20Login"
         }
-      initialReq = fromUrl "https://www.campus.rwth-aachen.de/office/"
+      initialReq = fromUrl baseUrl
+  print initialReq
   withManager $ \mgr -> do
     initialResp <- httpLbs initialReq mgr
+    liftIO $ print initialResp
     let cookie = responseCookieJar initialResp
     _ <- httpLbs (authReq { cookieJar = Just cookie}) mgr
     icalResp <- httpLbs (iCalReq { cookieJar = Just cookie}) mgr
@@ -45,5 +50,5 @@ main = do
     get "/" $ do
         setHeader "Content" "text/calendar"
         setHeader "Content-Disposition" "attachment; filename=calendar.ics"
-        cal <- liftIO $ getCalendar
+        cal <- liftIO getCalendar
         raw cal
