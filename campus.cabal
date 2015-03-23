@@ -23,11 +23,15 @@ executable campus
   build-depends:       base >=4.7 && <4.8,
                        conduit >= 1.2,
                        conduit-extra >= 1.1,
+                       connection >= 0.2.4,
+                       data-default-class >= 0.0.1,
                        http-conduit >= 2.1,
                        transformers >= 0.4,
                        bytestring >= 0.10,
                        scotty >= 0.9,
-                       time >= 1.4
+                       time >= 1.4,
+                       tls >= 1.2.16,
+                       x509-system >= 1.5
 
   -- hs-source-dirs:
   default-language:    Haskell2010

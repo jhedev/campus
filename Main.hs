@@ -1,22 +1,46 @@
 {-# LANGUAGE OverloadedStrings #-}
 
+import Data.Default.Class
 import Data.Monoid
 import Data.Time.Clock (getCurrentTime, utctDay)
 import Data.Time.Calendar (addDays)
 import Data.Conduit.Binary (sinkFile)
 import qualified Data.Conduit as C
+import Network.Connection (TLSSettings (..))
+
 import Network.HTTP.Conduit
+import Network.TLS
+import Network.TLS.Extra.Cipher
 import Data.Maybe
 import Control.Applicative ((<$>))
 import Control.Monad.IO.Class
 import System.Environment
+import System.X509
 import qualified Data.ByteString.Char8 as BS
 import qualified Data.ByteString.Lazy as LBS
 
 import Web.Scotty
 
+ciphers :: [Cipher]
+ciphers =
+    [ cipher_DHE_RSA_AES256_SHA256
+    , cipher_DHE_RSA_AES128_SHA256
+    , cipher_DHE_RSA_AES256_SHA1
+    , cipher_DHE_RSA_AES128_SHA1
+    , cipher_DHE_DSS_AES256_SHA1
+    , cipher_DHE_DSS_AES128_SHA1
+    , cipher_AES128_SHA1
+    , cipher_AES256_SHA1
+    , cipher_RC4_128_MD5
+    , cipher_RC4_128_SHA1
+    , cipher_RSA_3DES_EDE_CBC_SHA1
+    ]
+
+baseHost :: String
+baseHost = "www.campus.rwth-aachen.de"
+
 baseUrl :: String
-baseUrl = "https://www.campus.rwth-aachen.de/office/"
+baseUrl = "https://" <> baseHost <> "/office"
 
 fromUrl :: String -> Request
 fromUrl = fromJust . parseUrl
@@ -33,9 +57,18 @@ getCalendar = do
          method      = "POST",
          queryString = "?u=" <> user <> "&p=" <> password <> "&login=>%20Login"
         }
-      initialReq = fromUrl baseUrl
-  print initialReq
-  withManager $ \mgr -> do
+      initialReq = fromUrl $ baseUrl <> "/"
+
+  -- Manually create TLSSettings to force using TLS10 or TLS11 as TLS12 does not work currently
+  -- https://github.com/vincenthz/hs-tls/issues/87
+  certStore <- getSystemCertificateStore
+  let tlsSettings = TLSSettings $ (defaultParamsClient baseHost BS.empty)
+                      { clientSupported = def { supportedVersions = [TLS10, TLS11], supportedCiphers = ciphers}
+                      , clientShared = def { sharedCAStore = certStore }
+                      }
+      settings = mkManagerSettings tlsSettings Nothing
+
+  withManagerSettings settings $ \mgr -> do
     initialResp <- httpLbs initialReq mgr
     liftIO $ print initialResp
     let cookie = responseCookieJar initialResp
