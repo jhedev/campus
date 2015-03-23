@@ -1,0 +1,5 @@
+.git/*
+dist/*
+.cabal-sandbox/*
+cabal.sandbox.config
+tmp/*
