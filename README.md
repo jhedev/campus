@@ -1,6 +1,8 @@
 campus
 ======
 
+![build status](https://circleci.com/gh/jhedev/campus.png?style=shield)
+
 Simple web app to subscribe to the calendar offered by the Campus Office (https://www.campus.rwth-aachen.de/office/)
 
 ### Deploy to Heroku
