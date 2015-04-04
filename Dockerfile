@@ -3,6 +3,7 @@
 FROM haskell:7.8
 MAINTAINER Joel Hermanns <joel.hermanns@gmail.com>
 
+ENV PORT=3000
 RUN cabal update && mkdir -p /opt/campus
 
 WORKDIR /opt/campus
