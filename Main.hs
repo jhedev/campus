@@ -70,7 +70,6 @@ getCalendar = do
 
   withManagerSettings settings $ \mgr -> do
     initialResp <- httpLbs initialReq mgr
-    liftIO $ print initialResp
     let cookie = responseCookieJar initialResp
     _ <- httpLbs (authReq { cookieJar = Just cookie}) mgr
     icalResp <- httpLbs (iCalReq { cookieJar = Just cookie}) mgr
@@ -81,7 +80,7 @@ main = do
   port <- read <$> getEnv "PORT"
   scotty port $ do
     get "/" $ do
-        setHeader "Content" "text/calendar"
+        setHeader "Content-Type" "text/calendar; charset=utf-8"
         setHeader "Content-Disposition" "attachment; filename=calendar.ics"
         cal <- liftIO getCalendar
         raw cal
