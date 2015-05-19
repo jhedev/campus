@@ -78,8 +78,7 @@ getCalendar = do
 main :: IO ()
 main = do
   port <- read <$> getEnv "PORT"
-  scotty port $ do
-    get "/" $ do
+  scotty port $ get "/" $ do
         setHeader "Content-Type" "text/calendar; charset=utf-8"
         setHeader "Content-Disposition" "attachment; filename=calendar.ics"
         cal <- liftIO getCalendar
