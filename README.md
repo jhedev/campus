@@ -1,7 +1,7 @@
 campus
 ======
 
-![build status](https://circleci.com/gh/jhedev/campus.png?style=shield)
+[![build status](https://circleci.com/gh/jhedev/campus.png?style=shield)](https://circleci.com/gh/jhedev/campus/tree/master)
 
 Simple web app to subscribe to the calendar offered by the [Campus Office](https://www.campus.rwth-aachen.de/office/) of [RWTH Aachen](http://www.rwth-aachen.de/). (See @Faerbit's [fork](https://github.com/Faerbit/campus) to get this running for the Campus Office of [FH Aachen](https://www.fh-aachen.de/))
 
