@@ -22,15 +22,16 @@ executable campus
   -- other-extensions:
   build-depends:         base >=4.7 && <4.9
                        , conduit
-                       , conduit-extra 
-                       , connection 
+                       , connection
                        , data-default-class 
                        , http-conduit
-                       , transformers
+                       , http-types
                        , bytestring
-                       , scotty
                        , time
                        , tls
+                       , wai >= 3
+                       , wai-extra
+                       , warp
                        , x509-system
 
   -- hs-source-dirs:

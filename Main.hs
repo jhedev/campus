@@ -1,25 +1,25 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-import Data.Default.Class
-import Data.Monoid
+import Data.Default.Class (def)
+import Data.Monoid ((<>))
 import Data.Time.Clock (getCurrentTime, utctDay)
 import Data.Time.Calendar (addDays)
-import Data.Conduit.Binary (sinkFile)
-import qualified Data.Conduit as C
 import Network.Connection (TLSSettings (..))
 
-import Network.HTTP.Conduit
+import Network.HTTP.Conduit hiding (port)
+import Network.HTTP.Types.Status (status200)
+import Network.HTTP.Types.Header (hContentType)
 import Network.TLS
 import Network.TLS.Extra.Cipher
-import Data.Maybe
+import Network.Wai.Handler.Warp (run)
+import Network.Wai.Middleware.RequestLogger (logStdout)
+import Network.Wai (Application, responseLBS)
+import Data.Maybe (fromJust)
 import Control.Applicative ((<$>))
-import Control.Monad.IO.Class
 import System.Environment
 import System.X509
 import qualified Data.ByteString.Char8 as BS
 import qualified Data.ByteString.Lazy as LBS
-
-import Web.Scotty
 
 ciphers :: [Cipher]
 ciphers =
@@ -68,18 +68,25 @@ getCalendar = do
                       }
       settings = mkManagerSettings tlsSettings Nothing
 
-  withManagerSettings settings $ \mgr -> do
-    initialResp <- httpLbs initialReq mgr
-    let cookie = responseCookieJar initialResp
-    _ <- httpLbs (authReq { cookieJar = Just cookie}) mgr
-    icalResp <- httpLbs (iCalReq { cookieJar = Just cookie}) mgr
-    return $ responseBody icalResp
+  mgr <- newManager settings
+  initialResp <- httpLbs initialReq mgr
+  let cookie = responseCookieJar initialResp
+  _ <- httpLbs (authReq { cookieJar = Just cookie}) mgr
+  icalResp <- httpLbs (iCalReq { cookieJar = Just cookie}) mgr
+  return $ responseBody icalResp
+
+serveCal :: Application
+serveCal req resp = do
+  print req
+  cal <- getCalendar
+  resp $ responseLBS status200
+    [ (hContentType, "text/calendar; charset=utf-8")
+    , ("Content-Disposition", "attachment; filename=calendar.ics")] cal
+
+app :: Application
+app = logStdout serveCal
 
 main :: IO ()
 main = do
   port <- read <$> getEnv "PORT"
-  scotty port $ get "/" $ do
-        setHeader "Content-Type" "text/calendar; charset=utf-8"
-        setHeader "Content-Disposition" "attachment; filename=calendar.ics"
-        cal <- liftIO getCalendar
-        raw cal
+  run port app
